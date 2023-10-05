@@ -259,6 +259,65 @@ export default class UserController {
     delete this.activeSessions[email];
   }
 
+  async changePassword(userEmail: string, oldPassword: string, newPassword: string): Promise<IResponse> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const userFinded = await User.findOne({ email: userEmail });
+
+        if (userFinded) {
+          const { passwordHash } = this.encrypt.saltHashPassword(oldPassword, userFinded.salt);
+
+          if (passwordHash === userFinded.password) {
+            const { salt, passwordHash: newHash } = this.encrypt.genPassword(newPassword);
+
+            const userUpdated = await User.findOneAndUpdate(
+              { email: userEmail },
+              { password: newHash, salt: salt },
+              { returnDocument: "after", select: "-salt -password" }
+            );
+
+            if (!userUpdated) {
+              return reject({
+                ok: false,
+                message: "User not found or password not updated",
+                response: null,
+                code: 500,
+              });
+            }
+
+            return resolve({
+              ok: true,
+              message: "Password updated successfully",
+              response: null,
+              code: 200,
+            });
+          } else {
+            return reject({
+              ok: false,
+              message: "Old password is incorrect",
+              response: null,
+              code: 401,
+            });
+          }
+        } else {
+          return reject({
+            ok: false,
+            message: "User doesn't exist",
+            response: null,
+            code: 404,
+          });
+        }
+      } catch (err: any) {
+        return reject({
+          ok: false,
+          message: "Server error",
+          response: err,
+          code: 500,
+        });
+      }
+    });
+  }
+
   private removeSensiteveData(user: any) {
     let objUser = user.toObject();
     delete objUser.password;
