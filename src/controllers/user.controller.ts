@@ -5,7 +5,7 @@ import IResponse from "../interfaces/response.interface";
 
 export default class UserController {
   private encrypt = new AdEncrypClass();
-  private activeSessions: Record<string, string> ={};
+  private activeSessions: Record<string, string> = {};
 
   createUser(user: IUser): Promise<IResponse> {
     return new Promise((resolve, reject) => {
@@ -156,7 +156,7 @@ export default class UserController {
       })();
     });
   }
-  
+
   searchUserByEmail(email: string): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       (async () => {
@@ -205,20 +205,19 @@ export default class UserController {
             );
 
             if (passwordHash === userFinded.password) {
-                
-                if (this.activeSessions[email]){
-                    return reject({
-                        ok: false,
-                        message:"you are already logged in",
-                        response:null,
-                        code: 401 
-                    })
-                }
+              if (this.activeSessions[email]) {
+                return reject({
+                  ok: false,
+                  message: "you are already logged in",
+                  response: null,
+                  code: 401,
+                });
+              }
 
               let userToken = this.removeSensiteveData(userFinded);
               const token = await this.encrypt.genToken(userToken);
 
-              this.activeSessions[email] = token
+              this.activeSessions[email] = token;
 
               return resolve({
                 ok: true,
@@ -255,20 +254,28 @@ export default class UserController {
     });
   }
 
-  logoutUser(email: string): void{
+  logoutUser(email: string): void {
     delete this.activeSessions[email];
   }
 
-  async changePassword(userEmail: string, oldPassword: string, newPassword: string): Promise<IResponse> {
+  async changePassword(
+    userEmail: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<IResponse> {
     return new Promise(async (resolve, reject) => {
       try {
         const userFinded = await User.findOne({ email: userEmail });
 
         if (userFinded) {
-          const { passwordHash } = this.encrypt.saltHashPassword(oldPassword, userFinded.salt);
+          const { passwordHash } = this.encrypt.saltHashPassword(
+            oldPassword,
+            userFinded.salt
+          );
 
           if (passwordHash === userFinded.password) {
-            const { salt, passwordHash: newHash } = this.encrypt.genPassword(newPassword);
+            const { salt, passwordHash: newHash } =
+              this.encrypt.genPassword(newPassword);
 
             const userUpdated = await User.findOneAndUpdate(
               { email: userEmail },
@@ -317,32 +324,32 @@ export default class UserController {
       }
     });
   }
-generateRandomPassword(length: number): Promise<IResponse> {
-  return new Promise((resolve, reject) => {
-    try {
-      const randomPassword = this.generateRandomString(length);
-      const { salt, passwordHash } = this.encrypt.genPassword(randomPassword);
+  generateRandomPassword(length: number): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      try {
+        const randomPassword = this.generateRandomString(length);
+        const { salt, passwordHash } = this.encrypt.genPassword(randomPassword);
 
-      return resolve({
-        ok: true,
-        message: "random password generated",
-        response: { password: randomPassword, passwordHash, salt },
-        code: 200,
-      });
-    } catch (err) {
-      return reject({
-        ok: false,
-        message: "error occurred while generating random password",
-        response: err,
-        code: 500,
-      });
-    }
-  });
-}
-
+        return resolve({
+          ok: true,
+          message: "random password generated",
+          response: { password: randomPassword, passwordHash, salt },
+          code: 200,
+        });
+      } catch (err) {
+        return reject({
+          ok: false,
+          message: "error occurred while generating random password",
+          response: err,
+          code: 500,
+        });
+      }
+    });
+  }
 
   private generateRandomString(length: number): string {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";
 
     for (let i = 0; i < length; i++) {
