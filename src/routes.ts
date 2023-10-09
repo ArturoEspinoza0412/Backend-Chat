@@ -89,4 +89,16 @@ authRoutes.put("/changePassword", async (req: Request, res: Response) => {
   }
 })
 
+authRoutes.post("/generateRandomPassword", async (req: Request, res: Response) => {
+  const { length } = req.body;
+
+  try {
+    const response = await userCtrl.generateRandomPassword(length);
+    return res.status(response.code).json(response);
+  } catch (err: any) {
+    return res.status(err.code ? err.code : 500).json(err);
+  }
+});
+
+
 export default authRoutes;

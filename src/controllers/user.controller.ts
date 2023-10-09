@@ -317,6 +317,41 @@ export default class UserController {
       }
     });
   }
+generateRandomPassword(length: number): Promise<IResponse> {
+  return new Promise((resolve, reject) => {
+    try {
+      const randomPassword = this.generateRandomString(length);
+      const { salt, passwordHash } = this.encrypt.genPassword(randomPassword);
+
+      return resolve({
+        ok: true,
+        message: "random password generated",
+        response: { password: randomPassword, passwordHash, salt },
+        code: 200,
+      });
+    } catch (err) {
+      return reject({
+        ok: false,
+        message: "error occurred while generating random password",
+        response: err,
+        code: 500,
+      });
+    }
+  });
+}
+
+
+  private generateRandomString(length: number): string {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      result += characters.charAt(randomIndex);
+    }
+
+    return result;
+  }
 
   private removeSensiteveData(user: any) {
     let objUser = user.toObject();
